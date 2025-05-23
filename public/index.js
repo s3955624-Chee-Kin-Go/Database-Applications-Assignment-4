@@ -1,40 +1,48 @@
-fetch('/api/data')
-  .then(response => response.json())
-  .then(data => {
-    const tableBody = document.getElementById('data');
-    data.forEach(item => {
-      const row = document.createElement('tr');
-      const mvNumbCell = document.createElement('td');
-      const mvTitleCell = document.createElement('td');
-      const yrMadeCell = document.createElement('td');
-      const mvTypeCell = document.createElement('td');
-      const CritCell = document.createElement('td');
-      const MPAACell = document.createElement('td');
-      const NomsCell = document.createElement('td');
-      const AwrdCell = document.createElement('td');
-      const dirNumbCell = document.createElement('td');
+document.getElementById('searchForm').addEventListener('submit', async e => {
+  e.preventDefault();
 
-      mvNumbCell.textContent = item.mvNumb;
-      mvTitleCell.textContent = item.mvTitle;
-      yrMadeCell.textContent = item.yrMade;
-      mvTypeCell.textContent = item.mvType;
-      CritCell.textContent = item.Crit;
-      MPAACell.textContent = item.MPAA;
-      NomsCell.textContent = item.Noms;
-      AwrdCell.textContent = item.Awrd;
-      dirNumbCell.textContent = item.dirNumb;
+  const market       = document.getElementById('market').value.trim();
+  const propertyType = document.getElementById('propertyType').value;
+  const bedrooms     = document.getElementById('bedrooms').value;
 
-      row.appendChild(mvNumbCell);
-      row.appendChild(mvTitleCell);
-      row.appendChild(yrMadeCell);
-      row.appendChild(mvTypeCell);
-      row.appendChild(CritCell);
-      row.appendChild(MPAACell);
-      row.appendChild(NomsCell);
-      row.appendChild(AwrdCell);
-      row.appendChild(dirNumbCell);
+  if (!market) {
+    alert('Location is required');
+    return;
+  }
 
-      tableBody.appendChild(row);
-    });
-  })
-  .catch(error => console.error('Failed to fetch data', error));
+  const params = new URLSearchParams({ market });
+  if (propertyType) params.append('property_type', propertyType);
+  if (bedrooms)     params.append('bedrooms', bedrooms);
+
+  const res = await fetch(`/api/listings?${params}`);
+  if (!res.ok) {
+    document.getElementById('results').innerHTML =
+      `<div class="alert alert-danger">Error fetching listings</div>`;
+    return;
+  }
+
+  const listings = await res.json();
+  const container = document.getElementById('results');
+  if (listings.length === 0) {
+    container.innerHTML = `<div class="alert alert-info">No listings found.</div>`;
+    return;
+  }
+
+  // build cards
+  container.innerHTML = listings.map(l => `
+    <div class="card mb-3">
+      <div class="card-body">
+        <h5 class="card-title" style="font-size: 24px">
+          <a href="/bookings.html?listing_id=${l._id}">${l.name}</a>
+        </h5>
+        <p class="card-text">${l.description}</p>
+        <p class="card-text">
+          <strong>Daily Rate:</strong> $${l.price}
+        </p>
+        <p class="card-text">
+          <strong>Customer Rating:</strong> ${l.review_scores.review_scores_rating || 'N/A'}
+        </p>
+      </div>
+    </div>
+  `).join('');
+});
