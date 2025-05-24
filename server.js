@@ -62,6 +62,51 @@ app.get('/api/listingsAndReviews', async (req, res, next) => {
   }
 });
 
+// insert into the "bookings" collection
+app.post('/api/bookings', async (req, res, next) => {
+  try {
+    const {
+      listing_id,
+      start_date,
+      end_date,
+      client_name,
+      email,
+      daytime_phone,
+      mobile_phone,
+      postal_address,
+      home_address
+    } = req.body;
+
+    // simple validation
+    if (!listing_id || !start_date || !end_date || !client_name || !email) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    const bookingsCol = db.collection('bookings');
+    const now = new Date();
+    const bookingId = new Date().toISOString().replace(/[-T:.Z]/g, '').slice(0, 12);
+
+    const doc = {
+      booking_id: bookingId,
+      listing_id,
+      start_date: new Date(start_date),
+      end_date:   new Date(end_date),
+      client_name,
+      email,
+      daytime_phone: daytime_phone || '',
+      mobile_phone:  mobile_phone || '',
+      postal_address: postal_address || '',
+      home_address:   home_address || '',
+      booking_date: now
+    };
+
+    await bookingsCol.insertOne(doc);
+    res.status(201).json({ booking_id: bookingId });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // serve home page
 app.get('/index.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'public/index.html'));
