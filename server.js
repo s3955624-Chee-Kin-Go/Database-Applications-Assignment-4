@@ -27,19 +27,28 @@ app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // API: fetch filtered listings
-app.get('/api/listings', async (req, res, next) => {
+app.get('/api/listingsAndReviews', async (req, res, next) => {
   try {
     const { market, property_type, bedrooms } = req.query;
-    const filter = { "address.market": market };
-    if (property_type)   filter.property_type = property_type;
-    if (bedrooms)        filter.bedrooms = parseInt(bedrooms);
+    // limit
+    const limit = parseInt(req.query.limit) || null;
 
-    const listings = await listingsCol
-      .find(filter)
-      .project({ "name":1, "description":1, "price":1, "review_scores.review_scores_rating":1 })
-      .toArray();
+    // query
+    const query = { "address.market": market };
+    if (property_type)   query.property_type = property_type;
+    if (bedrooms) {
+      if (bedrooms === "8+") query.bedrooms = { $gte: 8 };
+      else                   query.bedrooms = parseInt(bedrooms);
+    }
 
-      const formattedListings = listings.map(l => ({
+    // build cursor
+    let cursor = listingsCol
+      .find(query)
+      .project({ name:1, description:1, price:1, "review_scores.review_scores_rating":1 });
+    if (limit) cursor = cursor.limit(limit);
+
+    const listings = await cursor.toArray();
+    const formattedListings = listings.map(l => ({
       ...l,
       price: l.price?.toString() || 'N/A',
       review_scores: {
