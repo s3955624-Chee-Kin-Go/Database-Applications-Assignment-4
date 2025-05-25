@@ -71,6 +71,19 @@
     </form>
   </div>
 
+    <script>
+    // Set minimum date to today for both date fields
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('start_date').setAttribute('min', today);
+    document.getElementById('end_date').setAttribute('min', today);
+    
+    // Update checkout min date when checkin changes
+    document.getElementById('start_date').addEventListener('change', function() {
+      const checkInDate = this.value;
+      document.getElementById('end_date').setAttribute('min', checkInDate);
+    });
+  </script>
+
   <script src="bookings.js"></script>
 </body>
 </html>

@@ -57,11 +57,11 @@ document.getElementById('searchForm').addEventListener('submit', async e => {
   const listings = await res.json();
   const container = document.getElementById('results');
   if (listings.length === 0) {
-    container.innerHTML = `<div class="alert alert-info"><h1>0 Listing that match your preferences</h1></div>`;
+    container.innerHTML = `<div class="alert alert-danger"><h1>0 Listing that match your preferences</h1></div>`;
     return;
   }
 
-  container.innerHTML = `<h1>${listings.length} Listings that match your preferences</h1>`;
+  container.innerHTML = `<div class="alert alert-info"><h1>${listings.length} Listings that match your preferences</h1></div>`;
   // build cards
   container.innerHTML += listings.map(l => `
     <div class="card mb-3">
